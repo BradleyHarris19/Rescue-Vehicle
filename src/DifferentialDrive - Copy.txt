@@ -1,0 +1,97 @@
+// My initial differential drive code before control loop implementation
+
+const int YAW_SCALE = 2;
+const int DEADZONE = 30;   //joystick deadzone
+
+const int YAW_INPUT = 15;
+const int DRIVE_INPUT = 14;
+
+const int LMOTOR_ENA = 10;
+const int LMOTOR_IN1 = 5;
+const int LMOTOR_IN2 = 4;
+
+const int RMOTOR_ENB = 11;
+const int RMOTOR_IN3 = 3;
+const int RMOTOR_IN4 = 2;
+
+//char print_buffer[80];
+
+void setup() {
+ //Serial.begin(9600);
+
+ pinMode(RMOTOR_ENB, OUTPUT);       //set up motor driver outputs
+ pinMode(RMOTOR_IN4, OUTPUT);
+ pinMode(RMOTOR_IN3, OUTPUT);
+ pinMode(LMOTOR_IN2, OUTPUT);
+ pinMode(LMOTOR_IN1, OUTPUT);
+ pinMode(LMOTOR_ENA, OUTPUT);
+
+ pinMode(DRIVE_INPUT, INPUT);      //set up joystick inputs
+ pinMode(YAW_INPUT, INPUT);
+
+}
+
+void loop()
+{
+ int Drive = analogRead(DRIVE_INPUT);
+ int Yaw = analogRead(YAW_INPUT);
+ //Serial.println(Drive);
+ //Serial.println(Yaw);
+  Drive = map(Drive, 0, 1023, 100, -100);
+  Yaw = map(Yaw, 0, 1023, -100, 100);
+  //Serial.println(Drive);
+  //Serial.println(Yaw);
+  int Vl = Drive + (Yaw/YAW_SCALE);
+  int Vr = Drive - (Yaw/YAW_SCALE);
+  //Serial.println(Vl);
+  //Serial.println(Vr);
+  Vl = constrain(Vl, -100, 100);
+  Vr = constrain(Vr, -100, 100);
+  //Serial.println(Vl);
+  //Serial.println(Vr);
+  Vl = map(Vl, -100, 100, -255, 255);
+  Vr = map(Vr, -100, 100, -255, 255);
+  //Serial.println(Vl);
+  //Serial.println(Vr);
+
+  //sprintf(print_buffer, "l=%d, r=%d", Vl, Vr);
+  //Serial.println(print_buffer);
+
+  if (abs(Vl) <= DEADZONE)               //if inside deadzone do nothing
+  {
+    digitalWrite(LMOTOR_IN2, HIGH);
+    digitalWrite(LMOTOR_IN1, HIGH);
+    analogWrite(LMOTOR_ENA, 0);
+  }
+  else if (Vl < 0)                      //if less than 0 go forward
+  {
+    digitalWrite(LMOTOR_IN2, LOW);
+    digitalWrite(LMOTOR_IN1, HIGH);
+    analogWrite(LMOTOR_ENA, abs(Vl));
+  }
+  else {                                //else go backward
+    digitalWrite(LMOTOR_IN2, HIGH);
+    digitalWrite(LMOTOR_IN1, LOW);
+    analogWrite(LMOTOR_ENA, abs(Vl));
+  }
+
+  if (abs(Vr) <= DEADZONE)               //if inside deadzone do nothing
+  {
+    digitalWrite(RMOTOR_IN3, HIGH);
+    digitalWrite(RMOTOR_IN4, HIGH);
+    analogWrite(RMOTOR_ENB, 255);
+  }
+  else if (Vr < 0)                      //if less than 0 go forward
+  {
+    digitalWrite(RMOTOR_IN3, LOW);
+    digitalWrite(RMOTOR_IN4, HIGH);
+    analogWrite(RMOTOR_ENB, abs(Vr));
+  }
+  else {                                //else go backward
+    digitalWrite(RMOTOR_IN3, HIGH);
+    digitalWrite(RMOTOR_IN4, LOW);
+    analogWrite(RMOTOR_ENB, abs(Vr));
+  }
+
+  delay(100);
+}
